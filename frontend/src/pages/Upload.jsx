@@ -1,108 +1,144 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import Container from "../components/common/Container";
+import UploadForm from "../components/upload/UploadForm";
+import FileDropzone from "../components/upload/FileDropzone";
+import UploadCard from "../components/upload/UploadCard";
+import AnalyzeButton from "../components/upload/AnalyzeButton";
+
+import useUpload from "../hooks/useUpload";
 import { uploadFloorPlan } from "../services/uploadService";
+import { startAnalysis } from "../services/analysisService";
+
 
 export default function Upload() {
-  const [projectName, setProjectName] = useState("");
-  const [buildingType, setBuildingType] = useState("");
-  const [location, setLocation] = useState("");
-  const [orientation, setOrientation] = useState("");
-  const [area, setArea] = useState("");
-  const [file, setFile] = useState(null);
+  const navigate = useNavigate();
 
-  async function handleSubmit(e) {
+  const {
+    selectedFile,
+    setSelectedFile,
 
-    e.preventDefault();
+    projectInfo,
+    setProjectInfo,
 
-    const formData = new FormData();
+    loading,
+    setLoading,
 
-    formData.append("project_name", projectName);
-    formData.append("building_type", buildingType);
-    formData.append("location", location);
-    formData.append("orientation", orientation);
-    formData.append("area", area);
-    formData.append("file", file);
+    setResult,
+  } = useUpload();
 
-    try{
 
-        const result = await uploadFloorPlan(formData);
+  async function handleAnalyze() {
+    if (!selectedFile) {
+      alert("Please upload a floor plan first.");
+      return;
+    }
 
-        alert(
-            `Project Uploaded Successfully
+    if (
+      !projectInfo.project_name?.trim() ||
+      !projectInfo.building_type?.trim() ||
+      !projectInfo.location?.trim()
+    ) {
+      alert("Please complete the project information.");
+      return;
+    }
 
-  Project ID:
-  ${result.project_id}`
+    try {
+      setLoading(true);
+
+      // 1. Upload the floor plan and create the project.
+      const uploadResponse = await uploadFloorPlan(
+        selectedFile,
+        projectInfo
+      );
+
+      console.log(
+        "Upload response:",
+        uploadResponse
+      );
+
+      const projectId =
+        uploadResponse.project_id ??
+        uploadResponse.id ??
+        uploadResponse.project?.id;
+
+      if (!projectId) {
+        throw new Error(
+          "The upload response does not contain project_id."
         );
+      }
 
-        console.log(result);
+      setResult(uploadResponse);
 
+      // 2. Start the real backend analysis.
+      const analysisResponse = await startAnalysis(
+        projectId
+      );
+
+      console.log(
+        "Analysis start response:",
+        analysisResponse
+      );
+
+      localStorage.setItem(
+        "currentProjectId",
+        projectId
+      );
+
+      // 3. Open the dashboard.
+      navigate(
+        `/dashboard/${projectId}`
+      );
+
+    } catch (error) {
+      console.error(
+        "Upload or analysis failed:",
+        error
+      );
+
+      const message =
+        error.response?.data?.detail ??
+        error.message ??
+        "Failed to start the analysis.";
+
+      alert(message);
+
+    } finally {
+      setLoading(false);
     }
+  }
 
-    catch(error){
-
-        console.error(error);
-
-        alert("Upload Failed");
-
-    }
-
-}
 
   return (
-    <div style={{ maxWidth: "600px", margin: "50px auto" }}>
-      <h1>GreenScape AI</h1>
-      <h2>Upload Floor Plan</h2>
+    <section className="py-20">
+      <Container>
+        <h1 className="text-5xl font-bold">
+          Upload Architectural Design
+        </h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Project Name"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
+        <p className="text-slate-500 mt-4 mb-10">
+          Upload your floor plan and let GreenScape AI analyze your design.
+        </p>
+
+        <UploadForm
+          projectInfo={projectInfo}
+          setProjectInfo={setProjectInfo}
         />
-        <br /><br />
 
-        <input
-          type="text"
-          placeholder="Building Type"
-          value={buildingType}
-          onChange={(e) => setBuildingType(e.target.value)}
+        <FileDropzone
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
         />
-        <br /><br />
 
-        <input
-          type="text"
-          placeholder="Location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
+        <UploadCard
+          selectedFile={selectedFile}
         />
-        <br /><br />
 
-        <input
-          type="text"
-          placeholder="Orientation"
-          value={orientation}
-          onChange={(e) => setOrientation(e.target.value)}
+        <AnalyzeButton
+          loading={loading}
+          onAnalyze={handleAnalyze}
         />
-        <br /><br />
-
-        <input
-          type="number"
-          placeholder="Area (m²)"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-        />
-        <br /><br />
-
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
-        <br /><br />
-
-        <button type="submit">
-          Analyze Design
-        </button>
-      </form>
-    </div>
+      </Container>
+    </section>
   );
 }

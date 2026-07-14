@@ -1,9 +1,17 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/api", tags=["Upload"])
+from app.database.session import get_db
+from app.models.project import Project
+
+
+router = APIRouter(
+    prefix="/upload",
+    tags=["Upload"],
+)
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -12,7 +20,7 @@ ALLOWED = {
     ".pdf",
     ".png",
     ".jpg",
-    ".jpeg"
+    ".jpeg",
 }
 
 
@@ -23,7 +31,8 @@ async def upload_floor_plan(
     building_type: str = Form(...),
     location: str = Form(...),
     orientation: str = Form(""),
-    area: float = Form(0)
+    area: float = Form(0),
+    db: Session = Depends(get_db),
 ):
 
     extension = Path(file.filename).suffix.lower()
@@ -31,7 +40,7 @@ async def upload_floor_plan(
     if extension not in ALLOWED:
         raise HTTPException(
             status_code=400,
-            detail="Only PDF, PNG, JPG are allowed."
+            detail="Only PDF, PNG, JPG and JPEG are allowed.",
         )
 
     project_id = str(uuid4())[:8]
@@ -43,10 +52,26 @@ async def upload_floor_plan(
     with open(save_path, "wb") as f:
         f.write(await file.read())
 
+    project = Project(
+        id=project_id,
+        project_name=project_name,
+        building_type=building_type,
+        location=location,
+        orientation=orientation,
+        area=area,
+        filename=filename,
+        file_path=str(save_path),
+        status="uploaded",
+    )
+
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+
     return {
         "status": "success",
-        "project_id": project_id,
-        "project_name": project_name,
-        "filename": filename,
-        "message": "File uploaded successfully"
+        "project_id": project.id,
+        "project_name": project.project_name,
+        "filename": project.filename,
+        "message": "Project uploaded successfully.",
     }

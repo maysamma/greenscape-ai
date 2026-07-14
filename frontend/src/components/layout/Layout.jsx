@@ -1,9 +1,19 @@
-export default function Card({ children, className = "" }) {
+import { Outlet } from "react-router-dom";
+import Navbar from "./Navbar";
+import Footer from "../home/Footer";
+
+export default function Layout() {
   return (
-    <div
-      className={`rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-lg ${className}`}
-    >
-      {children}
+    <div className="min-h-screen flex flex-col bg-slate-50">
+
+      <Navbar />
+
+      <main className="flex-1">
+        <Outlet />
+      </main>
+
+      <Footer />
+
     </div>
   );
 }
