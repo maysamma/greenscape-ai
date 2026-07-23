@@ -145,6 +145,249 @@ class AnalysisResultService:
 
         return analysis_result
 
+
+
+    
+    @staticmethod
+    def save_architecture_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        architecture_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.architecture_result_json = (
+            AnalysisResultService.serialize_json(
+                architecture_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+    @staticmethod
+    def save_sustainability_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        sustainability_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.sustainability_result_json = (
+            AnalysisResultService.serialize_json(
+                sustainability_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+
+
+    @staticmethod
+    def save_energy_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        energy_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.energy_result_json = (
+            AnalysisResultService.serialize_json(
+                energy_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+
+
+    @staticmethod
+    def save_lighting_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        lighting_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.lighting_result_json = (
+            AnalysisResultService.serialize_json(
+                lighting_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+
+
+    @staticmethod
+    def save_ventilation_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        ventilation_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.ventilation_result_json = (
+            AnalysisResultService.serialize_json(
+                ventilation_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+
+    @staticmethod
+    def save_accessibility_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        accessibility_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.accessibility_result_json = (
+            AnalysisResultService.serialize_json(
+                accessibility_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+    @staticmethod
+    def save_building_code_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        building_code_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.building_code_result_json = (
+            AnalysisResultService.serialize_json(
+                building_code_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+    @staticmethod
+    def save_cost_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        cost_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.cost_result_json = (
+            AnalysisResultService.serialize_json(
+                cost_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+    @staticmethod
+    def save_report_result(
+        db: Session,
+        analysis_result: AnalysisResult,
+        report_result: dict,
+    ) -> AnalysisResult:
+        analysis_result.report_result_json = (
+            AnalysisResultService.serialize_json(
+                report_result
+            )
+        )
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+
+
+
+    @staticmethod
+    def calculate_and_save_overall_score(
+        db: Session,
+        analysis_result: AnalysisResult,
+        *,
+        architecture_result: dict | None = None,
+        sustainability_result: dict | None = None,
+        energy_result: dict | None = None,
+        lighting_result: dict | None = None,
+    ) -> AnalysisResult:
+        results = [
+            architecture_result,
+            sustainability_result,
+            energy_result,
+            lighting_result,
+        ]
+
+        scores = []
+
+        for result in results:
+            if not isinstance(result, dict):
+                continue
+
+            analysis = result.get("analysis")
+
+            if not isinstance(analysis, dict):
+                continue
+
+            score = analysis.get("score")
+
+            if isinstance(score, (int, float)):
+                scores.append(float(score))
+
+        if scores:
+            overall_score = round(
+                sum(scores) / len(scores)
+            )
+        else:
+            overall_score = None
+
+        analysis_result.overall_score = overall_score
+
+        db.add(analysis_result)
+        db.commit()
+        db.refresh(analysis_result)
+
+        return analysis_result
+
+
+
+
+
+
+
+
+
+
+
+
     @staticmethod
     def build_agent_statuses(
         analysis_result: AnalysisResult,

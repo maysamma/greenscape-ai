@@ -24,7 +24,7 @@ ALLOWED = {
 }
 
 
-@router.post("/upload")
+@router.post("")
 async def upload_floor_plan(
     file: UploadFile = File(...),
     project_name: str = Form(...),

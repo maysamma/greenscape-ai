@@ -20,43 +20,49 @@ class DesignAnalyzerAgent(BaseAgent):
     async def analyze(
         self,
         project_data: dict[str, Any],
+        file_path: str | None = None,
         image_path: str | None = None,
+        vision_result: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
-        Analyze an uploaded architectural floor plan.
+        Analyze an architectural floor plan.
 
-        Flow:
-        1. Run the Vision Pipeline.
-        2. Extract architectural features.
-        3. Pass the extracted features to the BaseAgent.
-        4. Return the AI analysis with the original vision result.
+        The agent uses an existing Vision Pipeline result when
+        provided by the orchestrator. Otherwise, it runs the
+        Vision Pipeline using the supplied floor-plan path.
         """
 
-        if not image_path:
-            return {
-                "success": False,
-                "agent": self.name,
-                "error": "No floor plan file path was provided.",
-                "project_data": project_data,
-            }
+        resolved_file_path = file_path or image_path
 
-        inspection = await inspect_floor_plan(
-            file_path=image_path,
-        )
+        if vision_result is None:
+            if not resolved_file_path:
+                return {
+                    "success": False,
+                    "agent": self.name,
+                    "error": (
+                        "No floor plan path or Vision result "
+                        "was provided."
+                    ),
+                    "project_data": project_data,
+                }
 
-        if not inspection.get("success"):
-            return {
-                "success": False,
-                "agent": self.name,
-                "error": inspection.get(
-                    "error",
-                    "Vision analysis failed.",
-                ),
-                "project_data": project_data,
-                "image_information": inspection,
-            }
+            inspection = await inspect_floor_plan(
+                file_path=resolved_file_path,
+            )
 
-        vision_result = inspection["vision_result"]
+            if not inspection.get("success"):
+                return {
+                    "success": False,
+                    "agent": self.name,
+                    "error": inspection.get(
+                        "error",
+                        "Vision analysis failed.",
+                    ),
+                    "project_data": project_data,
+                    "image_information": inspection,
+                }
+
+            vision_result = inspection["vision_result"]
 
         design_features = self._build_design_features(
             vision_result=vision_result,
@@ -75,8 +81,13 @@ class DesignAnalyzerAgent(BaseAgent):
                 "analysis": agent_result,
             }
 
+        agent_status = agent_result.get(
+            "status",
+            "completed",
+        )
+
         return {
-            "success": True,
+            "success": agent_status == "completed",
             "agent": self.name,
             "project_data": project_data,
             "design_features": design_features,

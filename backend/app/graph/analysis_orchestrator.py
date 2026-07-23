@@ -6,6 +6,18 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.agents.design_analyzer.agent import DesignAnalyzerAgent
+from app.agents.architecture_review.agent import ArchitectureReviewAgent
+from app.agents.sustainability.agent import SustainabilityAgent
+from app.agents.energy.agent import EnergyAgent
+from app.agents.lighting.agent import LightingAgent
+from app.agents.ventilation.agent import VentilationAgent
+from app.agents.accessibility.agent import AccessibilityAgent
+from app.agents.building_code.agent import BuildingCodeAgent
+from app.agents.cost.agent import CostAgent
+from app.agents.report_generator.agent import ReportGeneratorAgent
+
+
+
 from app.models.analysis_result import AnalysisResult
 from app.models.project import Project
 from app.services.analysis_result_service import AnalysisResultService
@@ -87,6 +99,330 @@ class AnalysisOrchestrator:
                 analysis_result=analysis_result,
                 design_analysis=design_analysis,
             )
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="architecture",
+                progress=70,
+                error_message=None,
+            )
+
+            project.status = "architecture_running"
+            db.add(project)
+            db.commit()
+
+            architecture_agent = ArchitectureReviewAgent()
+
+            architecture_result = await architecture_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+            )
+
+            self.result_service.save_architecture_result(
+                db=db,
+                analysis_result=analysis_result,
+                architecture_result=architecture_result,
+            )
+
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="sustainability",
+                progress=80,
+                error_message=None,
+            )
+
+            project.status = "sustainability_running"
+            db.add(project)
+            db.commit()
+
+            sustainability_agent = SustainabilityAgent()
+
+            sustainability_result = await sustainability_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+            )
+
+            self.result_service.save_sustainability_result(
+                db=db,
+                analysis_result=analysis_result,
+                sustainability_result=sustainability_result,
+            )
+
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="energy",
+                progress=88,
+                error_message=None,
+            )
+
+            project.status = "energy_running"
+            db.add(project)
+            db.commit()
+
+            energy_agent = EnergyAgent()
+
+            energy_result = await energy_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+            )
+
+            self.result_service.save_energy_result(
+                db=db,
+                analysis_result=analysis_result,
+                energy_result=energy_result,
+            )
+
+
+
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="lighting",
+                progress=94,
+                error_message=None,
+            )
+
+            project.status = "lighting_running"
+            db.add(project)
+            db.commit()
+
+            lighting_agent = LightingAgent()
+
+            lighting_result = await lighting_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+                energy_result=energy_result,
+            )
+
+            self.result_service.save_lighting_result(
+                db=db,
+                analysis_result=analysis_result,
+                lighting_result=lighting_result,
+            )
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="ventilation",
+                progress=96,
+                error_message=None,
+            )
+
+            project.status = "ventilation_running"
+            db.add(project)
+            db.commit()
+
+            ventilation_agent = VentilationAgent()
+
+            ventilation_result = await ventilation_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+                energy_result=energy_result,
+                lighting_result=lighting_result,
+            )
+
+            self.result_service.save_ventilation_result(
+                db=db,
+                analysis_result=analysis_result,
+                ventilation_result=ventilation_result,
+            )
+
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="accessibility",
+                progress=98,
+                error_message=None,
+            )
+
+            project.status = "accessibility_running"
+            db.add(project)
+            db.commit()
+
+            accessibility_agent = AccessibilityAgent()
+
+            accessibility_result = await accessibility_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+                energy_result=energy_result,
+                lighting_result=lighting_result,
+                ventilation_result=ventilation_result,
+            )
+
+            self.result_service.save_accessibility_result(
+                db=db,
+                analysis_result=analysis_result,
+                accessibility_result=accessibility_result,
+            )
+
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="building_code",
+                progress=99,
+                error_message=None,
+            )
+
+            project.status = "building_code_running"
+            db.add(project)
+            db.commit()
+
+            building_code_agent = BuildingCodeAgent()
+
+            building_code_result = await building_code_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+                energy_result=energy_result,
+                lighting_result=lighting_result,
+                ventilation_result=ventilation_result,
+                accessibility_result=accessibility_result,
+            )
+
+            self.result_service.save_building_code_result(
+                db=db,
+                analysis_result=analysis_result,
+                building_code_result=building_code_result,
+            )
+
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="cost",
+                progress=99,
+                error_message=None,
+            )
+
+            project.status = "cost_running"
+            db.add(project)
+            db.commit()
+
+            cost_agent = CostAgent()
+
+            cost_result = await cost_agent.analyze(
+                project_data=project_data,
+                design_analysis=design_analysis,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+                energy_result=energy_result,
+                lighting_result=lighting_result,
+                ventilation_result=ventilation_result,
+                accessibility_result=accessibility_result,
+                building_code_result=building_code_result,
+            )
+
+            self.result_service.save_cost_result(
+                db=db,
+                analysis_result=analysis_result,
+                cost_result=cost_result,
+            )
+
+            self.result_service.update_status(
+                db=db,
+                analysis_result=analysis_result,
+                status="running",
+                current_stage="report_generation",
+                progress=100,
+                error_message=None,
+            )
+
+            project.status = "report_generation_running"
+            db.add(project)
+            db.commit()
+
+            report_agent = ReportGeneratorAgent()
+
+            report_result = await report_agent.analyze(
+                project_data=project_data,
+                agent_results={
+                    "design_analysis": design_analysis,
+                    "architecture": architecture_result,
+                    "sustainability": sustainability_result,
+                    "energy": energy_result,
+                    "lighting": lighting_result,
+                    "ventilation": ventilation_result,
+                    "accessibility": accessibility_result,
+                    "building_code": building_code_result,
+                    "cost": cost_result,
+                },
+            )
+
+            self.result_service.save_report_result(
+                db=db,
+                analysis_result=analysis_result,
+                report_result=report_result,
+            )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+            self.result_service.calculate_and_save_overall_score(
+                db=db,
+                analysis_result=analysis_result,
+                architecture_result=architecture_result,
+                sustainability_result=sustainability_result,
+                energy_result=energy_result,
+                lighting_result=lighting_result,
+            )
+
+
 
             # إكمال النسخة الأولى من الـ Workflow
             self.result_service.update_status(
@@ -192,81 +528,18 @@ class AnalysisOrchestrator:
         file_path: str,
         vision_result: dict[str, Any],
     ) -> dict[str, Any]:
+
         agent = DesignAnalyzerAgent()
 
-        possible_methods = [
-            "run",
-            "analyze",
-        ]
+        result = await agent.analyze(
+            project_data=project_data,
+            file_path=file_path,
+            vision_result=vision_result,
+        )
 
-        last_error: Exception | None = None
-
-        for method_name in possible_methods:
-            method = getattr(
-                agent,
-                method_name,
-                None,
-            )
-
-            if method is None:
-                continue
-
-            call_variants = [
-                {
-                    "project_data": project_data,
-                    "file_path": file_path,
-                    "vision_result": vision_result,
-                },
-                {
-                    "project_data": project_data,
-                    "vision_result": vision_result,
-                },
-                {
-                    "project_data": project_data,
-                    "file_path": file_path,
-                },
-                {
-                    "project_data": project_data,
-                },
-            ]
-
-            for arguments in call_variants:
-                try:
-                    result = method(**arguments)
-
-                    if inspect.isawaitable(result):
-                        result = await result
-
-                    return (
-                        AnalysisOrchestrator
-                        ._normalize_result(result)
-                    )
-
-                except TypeError as exc:
-                    last_error = exc
-
-        return {
-            "success": True,
-            "agent": "Design Analyzer Agent",
-            "project_data": project_data,
-            "design_features": vision_result.get(
-                "totals",
-                {},
-            ),
-            "vision_result": vision_result,
-            "analysis": {
-                "status": "Vision analysis completed.",
-                "warning": (
-                    "DesignAnalyzerAgent method "
-                    "signature was not matched."
-                ),
-                "technical_error": (
-                    str(last_error)
-                    if last_error
-                    else None
-                ),
-            },
-        }
+        return AnalysisOrchestrator._normalize_result(
+            result
+        )
 
     @staticmethod
     def _normalize_result(

@@ -10,6 +10,10 @@ export default function StatisticsCard({ analysis }) {
       score: analysis.overall_score,
     },
     {
+      title: "Architecture",
+      score: analysis.scores.architecture,
+    },
+    {
       title: "Sustainability",
       score: analysis.scores.sustainability,
     },

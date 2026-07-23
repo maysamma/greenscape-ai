@@ -243,7 +243,7 @@ function buildStatisticsData(analysis) {
 
     scores: {
       architecture:
-        analysis.architecture_result?.score ?? 0,
+        analysis.architecture_result?.analysis?.score ?? 0,
 
       sustainability:
         analysis.sustainability_result?.score ?? 0,

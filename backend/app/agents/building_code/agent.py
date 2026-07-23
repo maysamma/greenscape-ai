@@ -1,13 +1,11 @@
 import os
+from typing import Any
 
 from app.agents.base_agent import BaseAgent
-from app.agents.building_code.tools import (
-    run_basic_code_checks,
-)
 
 
 class BuildingCodeAgent(BaseAgent):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Building Code Agent",
             prompt_file=os.path.join(
@@ -16,16 +14,39 @@ class BuildingCodeAgent(BaseAgent):
             ),
         )
 
-    async def analyze(self, project_data: dict) -> dict:
-        checks = run_basic_code_checks(project_data)
+    async def analyze(
+        self,
+        project_data: dict[str, Any],
+        design_analysis: dict[str, Any],
+        architecture_result: dict[str, Any],
+        sustainability_result: dict[str, Any],
+        energy_result: dict[str, Any],
+        lighting_result: dict[str, Any],
+        ventilation_result: dict[str, Any],
+        accessibility_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        agent_input = {
+            "project_data": project_data,
+            "design_analysis": design_analysis,
+            "architecture_result": architecture_result,
+            "sustainability_result": sustainability_result,
+            "energy_result": energy_result,
+            "lighting_result": lighting_result,
+            "ventilation_result": ventilation_result,
+            "accessibility_result": accessibility_result,
+        }
 
-        result = await self.run(
-            {
-                "project_data": project_data,
-                "preliminary_checks": checks,
+        result = await self.run(agent_input)
+
+        if not isinstance(result, dict):
+            result = {
+                "agent": self.name,
+                "status": "failed",
+                "analysis": {},
+                "error": (
+                    "Building code analysis returned "
+                    "an invalid result."
+                ),
             }
-        )
-
-        result["code_checks"] = checks
 
         return result

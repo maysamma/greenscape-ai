@@ -1,13 +1,11 @@
 import os
+from typing import Any
 
 from app.agents.base_agent import BaseAgent
-from app.agents.lighting.tools import (
-    calculate_lighting_score,
-)
 
 
 class LightingAgent(BaseAgent):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Natural Lighting Agent",
             prompt_file=os.path.join(
@@ -16,16 +14,33 @@ class LightingAgent(BaseAgent):
             ),
         )
 
-    async def analyze(self, project_data: dict) -> dict:
-        metrics = calculate_lighting_score(project_data)
+    async def analyze(
+        self,
+        project_data: dict[str, Any],
+        design_analysis: dict[str, Any],
+        architecture_result: dict[str, Any],
+        sustainability_result: dict[str, Any],
+        energy_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        agent_input = {
+            "project_data": project_data,
+            "design_analysis": design_analysis,
+            "architecture_result": architecture_result,
+            "sustainability_result": sustainability_result,
+            "energy_result": energy_result,
+        }
 
-        result = await self.run(
-            {
-                "project_data": project_data,
-                "calculated_metrics": metrics,
+        result = await self.run(agent_input)
+
+        if not isinstance(result, dict):
+            result = {
+                "agent": self.name,
+                "status": "failed",
+                "analysis": {},
+                "error": (
+                    "Lighting analysis returned "
+                    "an invalid result."
+                ),
             }
-        )
-
-        result["metrics"] = metrics
 
         return result

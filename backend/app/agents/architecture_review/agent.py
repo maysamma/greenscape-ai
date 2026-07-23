@@ -1,13 +1,11 @@
 import os
+from typing import Any
 
-from app.agents.architecture_review.tools import (
-    calculate_space_efficiency,
-)
 from app.agents.base_agent import BaseAgent
 
 
 class ArchitectureReviewAgent(BaseAgent):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Architecture Review Agent",
             prompt_file=os.path.join(
@@ -16,16 +14,24 @@ class ArchitectureReviewAgent(BaseAgent):
             ),
         )
 
-    async def analyze(self, project_data: dict) -> dict:
-        metrics = calculate_space_efficiency(project_data)
+    async def analyze(
+        self,
+        project_data: dict[str, Any],
+        design_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
+        agent_input = {
+            "project_data": project_data,
+            "design_analysis": design_analysis,
+        }
 
-        result = await self.run(
-            {
-                "project_data": project_data,
-                "calculated_metrics": metrics,
+        result = await self.run(agent_input)
+
+        if not isinstance(result, dict):
+            result = {
+                "agent": self.name,
+                "status": "failed",
+                "analysis": {},
+                "error": "Architecture review returned an invalid result.",
             }
-        )
-
-        result["metrics"] = metrics
 
         return result
